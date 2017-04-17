@@ -10,6 +10,6 @@ Main features include:
 * #### Catmull Clark Subdivision        
 * #### Skinning and Skeletion
 
-![](./render_result/screencut.png)
+![](./screencut.png)
             
 
