@@ -4,7 +4,9 @@
 #endif // HALF_EDGE
 
 #include <la.h>
+#include<tuple>
 #include "joint.h"
+typedef std::tuple<int, int> tuple;
 
 
 class Face;

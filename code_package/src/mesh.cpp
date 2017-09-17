@@ -148,7 +148,8 @@ void Mesh::Mesh_Initialize(const std::vector<glm::vec3>& v,\
     int index=0;
     //This is not a halfedge vector.This edge vector is used to save the startpoint and endpoint of each edge,
     //which can help us to find "sym" member for each halfedge.
-    std::vector<edge_memory> edge;
+    std::map<tuple,HalfEdge*> edge_map;
+    std::map<tuple,HalfEdge*>::iterator it;
     mesh_face.reserve(face_sides.size()*300);
     mesh_halfedge.reserve(v_indice.size()*600);
     mesh_vertex.reserve(v.size()*300);
@@ -159,7 +160,6 @@ void Mesh::Mesh_Initialize(const std::vector<glm::vec3>& v,\
         vert_temp.SetPosition(v[i]);
         mesh_vertex.push_back(vert_temp);
     }
-
     for(int i=0;i<face_sides.size();i++)
     {
         Face face_temp(i);
@@ -173,37 +173,34 @@ void Mesh::Mesh_Initialize(const std::vector<glm::vec3>& v,\
                 mesh_vertex[v_indice[j]].SetHalfEdge(&mesh_halfedge[j]);
             mesh_halfedge[j].SetVertex(&mesh_vertex[v_indice[j]]);
             mesh_halfedge[j].SetFace(&mesh_face[i]);
-
+            tuple p,p_inverse;
             if(j!=index)
             {
                 mesh_halfedge[j-1].SetNext(&mesh_halfedge[j]);
-                edge_memory edge_temp;//Not the halfedge instance
-                edge_temp.endpoint_index=v_indice[j];
-                edge_temp.startpoint_index=v_indice[j-1];
-                edge.push_back(edge_temp);
+                p=tuple(v_indice[j-1],v_indice[j]);
+                p_inverse=tuple(v_indice[j],v_indice[j-1]);
             }
             else
             {
-                edge_memory edge_temp;//Not the halfedge instance
-                edge_temp.startpoint_index=v_indice[index+face_sides[i]-1];
-                edge_temp.endpoint_index=v_indice[j];
-                edge.push_back(edge_temp);
+                p=tuple(v_indice[index+face_sides[i]-1],v_indice[j]);
+                p_inverse=tuple(v_indice[j],v_indice[index+face_sides[i]-1]);
             }
             if(j==index+face_sides[i]-1)
             {
                 mesh_halfedge[j].SetNext(&mesh_halfedge[index]);
             }
-            for(int k=0;k<index;k++)
+
+            it=edge_map.find(p_inverse);
+            if(it!=edge_map.end())
             {
-                if(edge[k].startpoint_index==edge[j].endpoint_index\
-                        &&edge[k].endpoint_index==edge[j].startpoint_index)
-
-                {
-                        mesh_halfedge[j].SetSym(&mesh_halfedge[k]);
-                        mesh_halfedge[k].SetSym(&mesh_halfedge[j]);
-                }
-
+                mesh_halfedge[j].SetSym(it->second);
+                it->second->SetSym(&mesh_halfedge[j]);
             }
+            else
+            {
+                edge_map.insert(std::pair<tuple,HalfEdge*>(p,&mesh_halfedge[j]));
+            }
+
 
         }
         mesh_face[i].SetStartEdge(&mesh_halfedge[index]);
